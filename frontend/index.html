@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Math Solver</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+
+  <body>
+    <div class="container">
+      <h1>Math Solver</h1>
+      <p class="subtitle">Algebra • Calculus • Systems • Matrices</p>
+
+      <!-- INPUT MODE DROPDOWN -->
+      <select id="inputMode" onchange="changeMode()">
+        <option value="text">Text Input</option>
+        <option value="image">Image Input</option>
+        <option value="audio">Audio Input</option>
+      </select>
+
+      <!-- TEXT INPUT -->
+      <div id="textInput">
+        <input type="text" id="question" placeholder="e.g. integrate(x^2)" />
+        <div class="action-row">
+          <button onclick="solve()">Solve</button>
+          <button onclick="explain()">Explain</button>
+        </div>
+      </div>
+
+      <!-- IMAGE INPUT -->
+      <div id="imageInput" class="hidden">
+        <label class="upload-box">
+          📄 Upload an image
+          <input type="file" id="imageFile" accept="image/*" />
+        </label>
+
+        <p id="imageStatus" class="hint"></p>
+
+        <button id="extractBtn" disabled>Extract Text</button>
+
+        <div id="extractedSection" class="hidden">
+          <textarea id="extractedText" readonly></textarea>
+
+          <div class="choice-row">
+            <label>
+              <input type="radio" name="ocrQuality" value="correct" />
+              Looks usable
+            </label>
+
+            <label>
+              <input type="radio" name="ocrQuality" value="edit" />
+              Needs correction
+            </label>
+          </div>
+        </div>
+
+        <div id="editSection" class="hidden">
+          <textarea id="editText"></textarea>
+        </div>
+
+        <button id="solveImageBtn" class="hidden">Solve</button>
+      </div>
+
+      <!-- AUDIO INPUT -->
+      <div id="audioInput" class="hidden audio-wrapper">
+        <p class="hint">Tap the mic and speak your math problem</p>
+
+        <div class="audio-controls">
+          <div class="audio-spacer"></div>
+
+          <div class="mic-circle" onclick="startVoice()">
+            <div class="mic-icon"></div>
+          </div>
+
+          <button class="new-input-btn" onclick="resetAudio()">
+            New Input
+          </button>
+        </div>
+
+        <textarea
+          id="audioText"
+          placeholder="Your spoken input will appear here..."
+          readonly
+        ></textarea>
+
+        <button onclick="solveFromAudio()">Solve</button>
+      </div>
+
+      <!-- OUTPUT (ONLY ONE) -->
+      <div class="output" id="output"></div>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
