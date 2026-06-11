@@ -1,0 +1,69 @@
+@import "tailwindcss";
+@import "katex/dist/katex.min.css";
+
+@theme inline {
+  --color-bg: #0a0b14;
+  --color-surface: #11131f;
+  --color-surface-2: #181b2c;
+  --color-border: #262a40;
+  --color-fg: #e7e9f5;
+  --color-muted: #8b90b2;
+  --color-primary: #6366f1;
+  --color-primary-2: #8b5cf6;
+  --color-accent: #22d3ee;
+  --color-danger: #f87171;
+  --color-success: #34d399;
+
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "Cascadia Mono", "Segoe UI Mono", Menlo,
+    Monaco, "Courier New", monospace;
+}
+
+html,
+body {
+  background: var(--color-bg);
+  color: var(--color-fg);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  border-color: var(--color-border);
+}
+
+/* Subtle gradient background hint */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(800px 500px at 10% -10%, rgba(99, 102, 241, 0.18), transparent 60%),
+    radial-gradient(700px 500px at 110% 10%, rgba(139, 92, 246, 0.14), transparent 60%),
+    radial-gradient(600px 400px at 50% 120%, rgba(34, 211, 238, 0.10), transparent 60%);
+  z-index: -1;
+}
+
+/* Selection */
+::selection {
+  background: rgba(99, 102, 241, 0.45);
+  color: #fff;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-bg);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-surface-2);
+  border-radius: 8px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-border);
+}
