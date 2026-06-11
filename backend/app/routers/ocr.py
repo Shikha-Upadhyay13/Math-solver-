@@ -1,6 +1,6 @@
 from fastapi import APIRouter, File, HTTPException, UploadFile, status
 
-from app.services.ocr import get_provider
+from app.services.ocr import OCRError, get_engine, preprocess_image
 
 router = APIRouter(tags=["ocr"])
 
@@ -16,20 +16,35 @@ async def image_ocr(file: UploadFile = File(...)):
             detail=f"Unsupported content type: {file.content_type}",
         )
 
-    image_bytes = await file.read()
-    if len(image_bytes) > MAX_IMAGE_BYTES:
+    raw_bytes = await file.read()
+    if len(raw_bytes) > MAX_IMAGE_BYTES:
         raise HTTPException(
             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
             detail=f"Image exceeds {MAX_IMAGE_BYTES // (1024 * 1024)}MB limit",
         )
 
+    image_bytes = preprocess_image(raw_bytes)
+
     try:
-        provider = get_provider()
-        text = provider.extract(image_bytes)
-    except Exception as e:
+        result = get_engine().extract(image_bytes)
+    except OCRError as e:
         return {"success": False, "error": str(e)}
+    except Exception as e:  # noqa: BLE001
+        return {"success": False, "error": f"OCR engine crashed: {e}"}
 
-    if not text:
-        return {"success": False, "message": "No text detected in image"}
+    if not result.text:
+        return {
+            "success": False,
+            "message": "No text detected in image",
+            "provider": result.provider,
+            "confidence": result.confidence,
+        }
 
-    return {"success": True, "text": text}
+    return {
+        "success": True,
+        "text": result.text,
+        "latex": result.latex,
+        "confidence": round(result.confidence, 2),
+        "provider": result.provider,
+        "fallback_reason": result.fallback_reason,
+    }

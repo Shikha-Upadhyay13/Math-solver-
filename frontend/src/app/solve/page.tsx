@@ -192,11 +192,19 @@ function TextMode() {
   );
 }
 
+interface OCRMeta {
+  provider: string;
+  confidence: number;
+  latex: string | null;
+  fallback_reason: string | null;
+}
+
 function ImageMode() {
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [extracting, setExtracting] = useState(false);
   const [extracted, setExtracted] = useState<string | null>(null);
+  const [meta, setMeta] = useState<OCRMeta | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<SolveResult | null>(null);
   const [solving, setSolving] = useState(false);
@@ -216,6 +224,7 @@ function ImageMode() {
     setExtracting(true);
     setError(null);
     setExtracted(null);
+    setMeta(null);
     setResult(null);
     try {
       const fd = new FormData();
@@ -226,12 +235,27 @@ function ImageMode() {
         body: fd,
         headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       });
-      const data = (await res.json()) as { success: boolean; text?: string; error?: string; message?: string };
+      const data = (await res.json()) as {
+        success: boolean;
+        text?: string;
+        latex?: string | null;
+        confidence?: number;
+        provider?: string;
+        fallback_reason?: string | null;
+        error?: string;
+        message?: string;
+      };
       if (!res.ok || !data.success) {
         setError(data.error ?? data.message ?? "Failed to extract math from image");
         return;
       }
       setExtracted(data.text ?? "");
+      setMeta({
+        provider: data.provider ?? "unknown",
+        confidence: data.confidence ?? 0,
+        latex: data.latex ?? null,
+        fallback_reason: data.fallback_reason ?? null,
+      });
     } catch {
       setError("Cannot reach the backend.");
     } finally {
@@ -324,15 +348,37 @@ function ImageMode() {
 
         {extracted !== null && (
           <div className="mt-4">
-            <div className="text-xs uppercase tracking-wider text-[var(--color-muted)] mb-2">
-              Extracted (edit if needed)
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-xs uppercase tracking-wider text-[var(--color-muted)]">
+                Extracted (edit if needed)
+              </div>
+              {meta && <OCRMetaBadges meta={meta} />}
             </div>
+
+            {meta?.latex && (
+              <div className="mb-3 rounded-md border border-[var(--color-border)] bg-[var(--color-bg)]/60 px-4 py-3 overflow-x-auto">
+                <div className="text-xs text-[var(--color-muted)] mb-1">
+                  Recognised
+                </div>
+                <MathRender expr={meta.latex} display />
+              </div>
+            )}
+
             <textarea
               value={extracted}
               onChange={(e) => setExtracted(e.target.value)}
               rows={2}
               className="w-full bg-[var(--color-bg)] border border-[var(--color-border)] rounded-md px-3 py-2 font-mono focus:outline-none focus:border-indigo-500"
             />
+
+            {meta?.fallback_reason && (
+              <div className="mt-2 text-xs text-amber-300/90 flex items-start gap-2">
+                <Lightbulb className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                Low confidence ({Math.round(meta.confidence * 100)}%). Double-check
+                the extracted text before solving.
+              </div>
+            )}
+
             <button
               onClick={onSolve}
               disabled={solving || !extracted}
@@ -349,13 +395,34 @@ function ImageMode() {
         )}
       </div>
 
-      <div className="text-xs text-[var(--color-muted)] flex items-start gap-2">
-        <Lightbulb className="w-3.5 h-3.5 mt-0.5 shrink-0" />
-        OCR quality improves significantly in Phase 3 (Mathpix integration).
-        Handwritten input may need a quick edit before solving.
-      </div>
-
       {result && <ResultPanel result={result} />}
+    </div>
+  );
+}
+
+function OCRMetaBadges({ meta }: { meta: OCRMeta }) {
+  const pct = Math.round(meta.confidence * 100);
+  const dotColor =
+    meta.confidence >= 0.8
+      ? "bg-emerald-400"
+      : meta.confidence >= 0.6
+        ? "bg-amber-400"
+        : "bg-rose-400";
+  const providerLabel =
+    meta.provider === "mathpix"
+      ? "via Mathpix"
+      : meta.provider === "pix2text"
+        ? "via Pix2Text"
+        : `via ${meta.provider}`;
+  return (
+    <div className="flex items-center gap-2 text-xs">
+      <span className="px-2 py-0.5 rounded-full bg-white/5 border border-[var(--color-border)] text-[var(--color-muted)]">
+        {providerLabel}
+      </span>
+      <span className="px-2 py-0.5 rounded-full bg-white/5 border border-[var(--color-border)] inline-flex items-center gap-1.5">
+        <span className={`w-1.5 h-1.5 rounded-full ${dotColor}`} />
+        {pct}% confidence
+      </span>
     </div>
   );
 }
