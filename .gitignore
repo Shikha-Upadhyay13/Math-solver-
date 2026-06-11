@@ -55,6 +55,9 @@ desktop.ini
 *.swp
 *.swo
 
+# Claude Code workspace metadata
+.claude/
+
 # OCR / ML artifacts
 runs/
 *.pt
